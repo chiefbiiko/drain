@@ -1,24 +1,14 @@
-function noop(): void {}
-
-export function pullNonBlocking(
+export async function drain(
   reader: Deno.Reader,
-  ondata: (chunk: Uint8Array) => any,
-  onerror?: (err: Error) => any
+  ondata: (chunk: Uint8Array) => any
 ): Promise<void> {
   const it: AsyncIterableIterator<Uint8Array> = Deno.toAsyncIterator(reader);
   let result: { done: boolean; value: Uint8Array };
-
-  return new Promise(
-    async (): Promise<void> => {
-      for (;;) {
-        result = await it.next();
-
-        if (result.done) {
-          break;
-        }
-
-        ondata(result.value);
-      }
+  for (;;) {
+    result = await it.next();
+    if (result.done) {
+      return;
     }
-  ).catch(onerror || noop);
+    ondata(result.value);
+  }
 }
