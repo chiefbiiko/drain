@@ -4,4 +4,4 @@ install:
   - ps: iex (iwr https://deno.land/x/install/install.ps1)
 
 test_script: 
-  - cmd: deno run --allow-net=localhost ./test.ts
+  - cmd: deno run --allow-net=127.0.0.1 ./test.ts
