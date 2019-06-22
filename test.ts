@@ -31,7 +31,16 @@ test({
     drain(conn, ondata).catch(fail);
 
     assertEquals(dest, []);
-    setTimeout((): void => assertEquals(dest.join(""), "419"), 500);
+
+    // making sure we are awaiting the second assert
+    await new Promise(
+      (resolve: () => void): void => {
+        setTimeout((): void => {
+          assertEquals(dest.join(""), "419");
+          resolve();
+        }, 500);
+      }
+    );
   }
 });
 
