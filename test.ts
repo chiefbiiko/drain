@@ -20,27 +20,23 @@ test({
     );
 
     const conn: Deno.Conn = await Deno.dial("tcp", "127.0.0.1:41900");
-    const dest: string[] = [];
+
+    let dest: string = "";
 
     function ondata(chunk: Uint8Array): void {
-      dest.push(decode(chunk, "utf8"));
+      dest += decode(chunk, "utf8");
     }
 
-    // After calling drain on a Deno.Reader the ondata listener will
+    // After calling drain on a Deno.Reader the ondata handler will
     // be called with every chunk read from the reader
-    drain(conn, ondata).catch(fail);
+    drain(conn, ondata)
+      // drain reutrns a Drainage which has two props: promise and cancel()
+      .promise // onclose
+      .then((): void => assertEquals(dest, "419"))
+      // onerror
+      .catch(fail);
 
-    assertEquals(dest, []);
-
-    // making sure we are awaiting the second assert
-    await new Promise(
-      (resolve: () => void): void => {
-        setTimeout((): void => {
-          assertEquals(dest.join(""), "419");
-          resolve();
-        }, 500);
-      }
-    );
+    assertEquals(dest, "");
   }
 });
 
