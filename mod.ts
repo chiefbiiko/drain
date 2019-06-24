@@ -1,6 +1,8 @@
 export interface DrainOptions {
+  // max number of reads
   limit?: number;
-  maxReadTimeout?: number;
+  // max read timeout
+  timeout?: number;
 }
 
 export type Cancel = (err?: Error) => void;
@@ -12,9 +14,9 @@ export function drain(
     throw err;
   },
   onclose: () => any = (): void => undefined,
-  { limit = Infinity, maxReadTimeout = Infinity }: DrainOptions = {}
+  { limit = Infinity, timeout = Infinity }: DrainOptions = {}
 ): Cancel {
-  const time: boolean = maxReadTimeout !== Infinity;
+  const time: boolean = timeout !== Infinity;
   const cancelation: { requested?: boolean; error?: Error } = {};
 
   new Promise(
@@ -26,9 +28,8 @@ export function drain(
         reader
       );
 
-      let readStart: number = NaN;
-
       let result: { done: boolean; value: Uint8Array };
+      let readStart: number = NaN;
 
       for (let i: number = 0; i < limit; ++i) {
         if (cancelation.requested) {
@@ -42,9 +43,9 @@ export function drain(
 
         result = await it.next();
 
-        if (time && Date.now() - readStart > maxReadTimeout) {
+        if (time && Date.now() - readStart > timeout) {
           return reject(
-            new Error(`maxReadTimeout of ${maxReadTimeout}ms exceeded.`)
+            new Error(`Max read timeout of ${timeout}ms exceeded.`)
           );
         }
 

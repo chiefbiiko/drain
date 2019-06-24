@@ -42,7 +42,7 @@ drain(
     throw err;
   },
   onclose: () => any = (): void => undefined,
-  { limit = Infinity, maxReadTimeout = Infinity }: DrainOptions = {}
+  { limit = Infinity, timeout = Infinity }: DrainOptions = {}
 ): Cancel
 ```
 

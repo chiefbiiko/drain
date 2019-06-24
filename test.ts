@@ -217,7 +217,7 @@ test({
           function onclose(): void {
             reject(new Error("unreachable"));
           },
-          { maxReadTimeout: 50 }
+          { timeout: 50 }
         );
       }
     );
