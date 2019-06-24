@@ -8,7 +8,7 @@ import {
   encode,
   decode
 } from "https://denopkg.com/chiefbiiko/std-encoding/mod.ts";
-import { Drainage, drain } from "./mod.ts";
+import { Cancel, drain } from "./mod.ts";
 
 test({
   name: "drains readers non-blocking",
@@ -59,7 +59,7 @@ test({
 
         let count: number = 0;
 
-        const drainage: Drainage = drain(
+        const cancel: Cancel = drain(
           reader,
           function ondata(chunk: Uint8Array): void {
             ++count;
@@ -73,8 +73,8 @@ test({
           }
         );
 
-        // canceling the drainage.promise
-        drainage.cancel();
+        // canceling the drainage
+        cancel();
       }
     );
   }
@@ -95,13 +95,13 @@ test({
 
         let count: number = 0;
 
-        const drainage: Drainage = drain(
+        const cancel: Cancel = drain(
           reader,
           function ondata(chunk: Uint8Array): void {
             ++count;
           },
           function onclose(): void {
-            reject(null);
+            reject(new Error("unreachable"));
           },
           function onerror(err: Error): void {
             assertEquals(err.message, "fraud");
@@ -110,8 +110,8 @@ test({
           }
         );
 
-        // canceling the drainage.promise with an error triggers reject
-        drainage.cancel(new Error("fraud"));
+        // canceling the drainage with an error triggers onerror
+        cancel(new Error("fraud"));
       }
     );
   }
@@ -132,7 +132,7 @@ test({
 
         let count: number = 0;
 
-        const drainage: Drainage = drain(
+        const cancel: Cancel = drain(
           reader,
           function ondata(chunk: Uint8Array): void {
             ++count;
@@ -146,9 +146,9 @@ test({
           }
         );
 
-        // double-canceling the drainage.promise
-        drainage.cancel();
-        drainage.cancel();
+        // double-canceling the internal promise
+        cancel();
+        cancel();
       }
     );
   }
@@ -159,17 +159,10 @@ test({
   fn(): Promise<void> {
     return new Promise(
       (resolve: () => void, reject: (err: Error) => void): void => {
-        let read: number = 0;
-
-        // this reader pushes 10 chunks only
+        // a never-ending reader
         const reader: Deno.Reader = {
           async read(buf: Uint8Array): Promise<Deno.ReadResult> {
-            if (read++ === 10) {
-              return { nread: 0, eof: true };
-            }
-
             buf.fill(99);
-
             return { nread: buf.length, eof: false };
           }
         };
@@ -203,12 +196,14 @@ test({
         // a slow reader
         const reader: Deno.Reader = {
           read(buf: Uint8Array): Promise<Deno.ReadResult> {
-            return new Promise((resolve: (result: Deno.ReadResult) => void): void => {
-              setTimeout((): void => {
-                buf.fill(99);
-                resolve({ nread: buf.length, eof: false })
-              }, 500)
-            })
+            return new Promise(
+              (resolve: (result: Deno.ReadResult) => void): void => {
+                setTimeout((): void => {
+                  buf.fill(99);
+                  resolve({ nread: buf.byteLength, eof: false });
+                }, 70);
+              }
+            );
           }
         };
 
@@ -216,13 +211,13 @@ test({
           reader,
           function ondata(chunk: Uint8Array): void {},
           function onclose(): void {
-            reject(null)
+            reject(new Error("unreachable"));
           },
           function onerror(err: Error): void {
-            assertEquals(err.message, "timeout")
-            resolve()
+            assert(/timeout/i.test(err.message));
+            resolve();
           },
-          { maxReadTimeout: 400 }
+          { maxReadTimeout: 50 }
         );
       }
     );
