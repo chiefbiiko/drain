@@ -5,26 +5,16 @@ export interface DrainOptions {
 
 export type Cancel = (err?: Error) => void;
 
-// export interface Drainage {
-//   readonly promise: Promise<void>;
-//   readonly cancel: (err?: Error) => void;
-// }
-
 export function drain(
   reader: Deno.Reader,
   ondata: (chunk: Uint8Array) => any,
-  onclose: () => any = (): void => undefined,
   onerror: (err: Error) => any = (err: Error): void => {
     throw err;
   },
-  { limit, maxReadTimeout }: DrainOptions = {
-    limit: Infinity,
-    maxReadTimeout: Infinity
-  }
+  onclose: () => any = (): void => undefined,
+  { limit = Infinity, maxReadTimeout = Infinity }: DrainOptions = {}
 ): Cancel {
-  limit = limit || Infinity;
-  maxReadTimeout = maxReadTimeout || Infinity;
-
+  const time: boolean = maxReadTimeout !== Infinity;
   const cancelation: { requested?: boolean; error?: Error } = {};
 
   new Promise(
@@ -45,16 +35,14 @@ export function drain(
           return cancelation.error ? reject(cancelation.error) : resolve();
         }
 
-        if (maxReadTimeout !== Infinity) {
+        // TODO: use the performance api for these measurements
+        if (time) {
           readStart = Date.now();
         }
 
         result = await it.next();
 
-        if (
-          maxReadTimeout !== Infinity &&
-          Date.now() - readStart > maxReadTimeout
-        ) {
+        if (time && Date.now() - readStart > maxReadTimeout) {
           return reject(
             new Error(`maxReadTimeout of ${maxReadTimeout}ms exceeded.`)
           );
@@ -72,13 +60,6 @@ export function drain(
     }
   ).then(onclose, onerror);
 
-  // const drainage: Drainage = {
-  //   promise: ,
-  //
-  // };
-
-  // return drainage;
-  //
   return function cancel(err?: Error): void {
     cancelation.error = err;
     cancelation.requested = true;

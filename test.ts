@@ -32,11 +32,11 @@ test({
       function ondata(chunk: Uint8Array): void {
         dest += decode(chunk, "utf8");
       },
-      function onclose(): void {
-        assertEquals(dest, "419");
-      },
       function onerror(err: Error): void {
         fail(err.message);
+      },
+      function onclose(): void {
+        assertEquals(dest, "419");
       }
     );
 
@@ -64,12 +64,12 @@ test({
           function ondata(chunk: Uint8Array): void {
             ++count;
           },
+          function onerror(err: Error): void {
+            reject(err);
+          },
           function onclose(): void {
             assert(count !== 0);
             resolve();
-          },
-          function onerror(err: Error): void {
-            reject(err);
           }
         );
 
@@ -100,13 +100,13 @@ test({
           function ondata(chunk: Uint8Array): void {
             ++count;
           },
-          function onclose(): void {
-            reject(new Error("unreachable"));
-          },
           function onerror(err: Error): void {
             assertEquals(err.message, "fraud");
             assert(count !== 0);
             resolve();
+          },
+          function onclose(): void {
+            reject(new Error("unreachable"));
           }
         );
 
@@ -137,12 +137,12 @@ test({
           function ondata(chunk: Uint8Array): void {
             ++count;
           },
+          function onerror(err: Error): void {
+            reject(err);
+          },
           function onclose(): void {
             assert(count !== 0);
             resolve();
-          },
-          function onerror(err: Error): void {
-            reject(err);
           }
         );
 
@@ -174,12 +174,12 @@ test({
           function ondata(chunk: Uint8Array): void {
             ++count;
           },
+          function onerror(err: Error): void {
+            reject(err);
+          },
           function onclose(): void {
             assertEquals(count, 1);
             resolve();
-          },
-          function onerror(err: Error): void {
-            reject(err);
           },
           { limit: 1 }
         );
@@ -210,12 +210,12 @@ test({
         drain(
           reader,
           function ondata(chunk: Uint8Array): void {},
-          function onclose(): void {
-            reject(new Error("unreachable"));
-          },
           function onerror(err: Error): void {
             assert(/timeout/i.test(err.message));
             resolve();
+          },
+          function onclose(): void {
+            reject(new Error("unreachable"));
           },
           { maxReadTimeout: 50 }
         );
