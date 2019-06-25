@@ -25,7 +25,7 @@ const conn: Deno.Conn = await Deno.dial("tcp", "419.0.0.1:41900");
 const cancel = drain(conn, ondata, onerror, onclose);
 
 // go about your business with all those handlers setup
-// ..hack .. hack .. hack.. hack... ..... hack hack...
+// ..hack .. hack .. hack.. hack... (maybe call cancel)..... hack hack...
 ```
 
 ## API
@@ -46,7 +46,7 @@ export function drain(
 ): Cancel
 ```
 
-The returned `cancel(err?: Error): void` function allows to stop reading. If it is invoked with an error the `onerror` handler is called with that error, otherwise the `onclose` handler gets invoked as reaction to the cancelation.
+The returned `cancel(err?: Error): void` function allows to stop reading. Once invoked any pending reads are awaited before invoking either the `onerror` or `onclose` handler. If `cancel` is invoked with an error the `onerror` handler is called with that error, otherwise the `onclose` handler gets invoked as reaction to the cancelation.
 
 The option's `limit` property can be used to cap the number of reads and likewise the number of the `ondata` handler invocations. The `timeout` prop is probably useful when the `reader` is a network socket.
 
