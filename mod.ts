@@ -17,7 +17,9 @@ export function drain(
   { limit = Infinity, timeout = Infinity }: DrainOptions = {}
 ): Cancel {
   const time: boolean = timeout !== Infinity;
-  const cancelation: { requested?: boolean; error?: Error } = {};
+
+  let cancelReq: boolean = false;
+  let cancelErr: Error = null;
 
   new Promise(
     async (
@@ -32,8 +34,8 @@ export function drain(
       let readStart: number = NaN;
 
       for (let i: number = 0; i < limit; ++i) {
-        if (cancelation.requested) {
-          return cancelation.error ? reject(cancelation.error) : resolve();
+        if (cancelReq) {
+          return cancelErr ? reject(cancelErr) : resolve();
         }
 
         // TODO: use the performance api for these measurements
@@ -62,7 +64,7 @@ export function drain(
   ).then(onclose, onerror);
 
   return function cancel(err?: Error): void {
-    cancelation.error = err;
-    cancelation.requested = true;
+    cancelErr = err;
+    cancelReq = true;
   };
 }

@@ -35,7 +35,7 @@ const cancel = drain(conn, ondata, onerror, onclose);
 Pull all data from the `reader` and pass it to a simple `ondata` handler.
 
 ``` ts
-drain(
+export function drain(
   reader: Deno.Reader,
   ondata: (chunk: Uint8Array) => any,
   onerror: (err: Error) => any = (err: Error): void => {
@@ -47,6 +47,19 @@ drain(
 ```
 
 The returned `cancel(err?: Error): void` function allows to stop reading. If it is invoked with an error the `onerror` handler is called with that error, otherwise the `onclose` handler gets invoked as reaction to the cancelation.
+
+The option's `limit` property can be used to cap the number of reads and likewise the number of the `ondata` handler invocations. The `timeout` prop is probably useful when the `reader` is a network socket.
+
+#### `interface DrainOptions`
+
+``` ts
+export interface DrainOptions {
+  // max number of reads
+  limit?: number;
+  // max read timeout
+  timeout?: number;
+}
+```
 
 #### `type Cancel`
 
