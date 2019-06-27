@@ -188,40 +188,4 @@ test({
   }
 });
 
-test({
-  name: "allows custom read timeouts",
-  fn(): Promise<void> {
-    return new Promise(
-      (resolve: () => void, reject: (err: Error) => void): void => {
-        // a slow reader
-        const reader: Deno.Reader = {
-          read(buf: Uint8Array): Promise<Deno.ReadResult> {
-            return new Promise(
-              (resolve: (result: Deno.ReadResult) => void): void => {
-                setTimeout((): void => {
-                  buf.fill(99);
-                  resolve({ nread: buf.byteLength, eof: false });
-                }, 70);
-              }
-            );
-          }
-        };
-
-        drain(
-          reader,
-          function ondata(chunk: Uint8Array): void {},
-          function onerror(err: Error): void {
-            assert(/timeout/i.test(err.message));
-            resolve();
-          },
-          function onclose(): void {
-            reject(new Error("unreachable"));
-          },
-          { timeout: 50 }
-        );
-      }
-    );
-  }
-});
-
 runIfMain(import.meta);

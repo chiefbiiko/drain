@@ -8,7 +8,7 @@ Kinda like `readableStream.on("data", listener)` in node.
 
 ## Usage
 
-Call `drain` on a `Deno.Reader` to start pulling data. 
+Call `drain` on a `Deno.Reader` to start pulling data.
 The `ondata` handler will be called with every chunk read from the reader.
 
 ``` ts
@@ -42,13 +42,13 @@ export function drain(
     throw err;
   },
   onclose: () => any = (): void => undefined,
-  { limit = Infinity, timeout = Infinity }: DrainOptions = {}
+  { limit = Infinity }: DrainOptions = {}
 ): Cancel
 ```
 
-The returned `cancel(err?: Error): void` function allows to stop reading. Once invoked any pending reads are awaited before invoking either the `onerror` or `onclose` handler. If `cancel` is invoked with an error the `onerror` handler is called with that error, otherwise the `onclose` handler gets invoked as reaction to the cancelation.
+The returned `cancel(err?: Error): void` function allows to stop reading. Once invoked any pending reads are awaited before invoking either the `onerror` or `onclose` handler. If `cancel` is invoked with an error the `onerror` handler is called with that error, otherwise the `onclose` handler gets invoked as reaction to the cancelation. Canceling is a bike-shed feature, fx if `reader` never resolves its `read` promises, the cancelation will never take place because we are blocking while awaiting the read promise.
 
-The option's `limit` property can be used to cap the number of reads and likewise the number of the `ondata` handler invocations. The `timeout` prop is probably useful when the `reader` is a network socket.
+The option's `limit` property can be used to cap the number of reads and likewise the number of the `ondata` handler invocations.
 
 #### `interface DrainOptions`
 
@@ -56,8 +56,6 @@ The option's `limit` property can be used to cap the number of reads and likewis
 export interface DrainOptions {
   // max number of reads
   limit?: number;
-  // max read timeout
-  timeout?: number;
 }
 ```
 
